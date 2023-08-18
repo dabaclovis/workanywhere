@@ -1,0 +1,68 @@
+port to allow on security group 
+==========master=========================
+1. TCP 6443      → For Kubernetes API server
+2. TCP 2379–2380 → For etcd server client API
+3. TCP 10250     → For Kubelet API
+4. TCP 10259     → For kube-scheduler
+5. TCP 10257     → For kube-controller-manager
+6. TCP 22        → For remote access with ssh
+7. UDP 8472      → Cluster-Wide Network Comm. — Flannel VXLAN
+=============nodes ===============================================
+Create Security Group for worker nodes and open the following ports.
+Ports for the Worker Node(s)
+1. TCP 10250       → For Kubelet API
+2. TCP 30000–32767 → NodePort Services†
+3. TCP 22          → For remote access with ssh
+4. UDP 8472   
+============================================================================================================================
+sudo apt-get update -y 
+=============================================
+<!-- install docker on all instances -->
+sudo curl -sSL https://get.docker.com/ | sh
+sudo systemctl enable docker 
+sudo systemctl start docker 
+sudo systemctl status docker 
+
+sudo usermod -aG docker $USER 
+
+------------on all nodes ------------
+sudo vim /etc/docker/daemon.json
+{
+   "exec-opts": ["native.cgroupdriver=systemd"]
+}
+sudo systemctl daemon-reload
+sudo systemctl restart docker
+-------------------------------------------------
+<!-- install kubernetes -->
+curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add
+echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" >> ~/kubernetes.list
+sudo mv ~/kubernetes.list /etc/apt/sources.list.d
+sudo apt-get update 
+sudo apt-get install kubeadm kubelet kubectl -y
+sudo apt-mark hold kubeadm kubelet kubectl
+
+sudo swapoff -a
+kubeadm version
+
+sudo hostnamectl set-hostname <namehere>
+
+
+===============master node ================
+sudo kubeadm init --pod-network-cidr=10.244.0.0/16
+
+Run these 3 commands in the master node as follows.
+mkdir -p $HOME/.kube
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo chown $(id -u):$(id -g) $HOME/.kube/config 
+
+
+====notes=====
+
+============don't forget to copy the advertise code to nodes==========
+
+kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml
+
+
+sudo hostnamectl set-hostname k8s-master
+sudo hostnamectl set-hostname k8s-node1
+sudo hostnamectl set-hostname k8s-node2

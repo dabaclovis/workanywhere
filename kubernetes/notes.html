@@ -1,0 +1,66 @@
+kubernetes layout:
+
+  - Infrastructure plane
+  - kubernetes plane
+  - Workload plane
+
+
+  1. Infrastructure plane: consist of EC2 instances (nodes)
+  2. kubernetes plane: 
+     - control plane components:
+        - kube-apiserver
+        - kube-scheduler
+        - kube-control manager
+           - pod controller --->(1)
+           - service controller ---> (2)
+           - replication controller ---> (3)
+           - replicaset controller ---> (4)
+           - deployment controller ---> (5)
+           - deamonset controller ---> (6)
+           - persistent volume controller
+           - persistent volume claim controller
+           - rbac controller
+           - serviceaccount controller
+           - configMap controller
+           - secret controller
+           - cs controller
+           - role controller
+           - rolebinding controller
+           - Namespace controller
+           - resourceQuota controller
+           - job controller
+           - node controller
+           - crd controller
+           - storageclass controller 
+           - hpa controller
+           - CAS controller
+        - etcd 
+     - Worker nodes components:
+        - kubelet
+        - kube-proxy
+        - container runtime
+          - containerd
+          - docker
+          - cri 
+
+  3. workload plane: on worker nodes only
+    - k8s pods (business logic)
+    - kubectl utility to querry the cluster
+
+
+
+    # sudo kubeadm join 172.31.19.200:6443 --token 111be3.dowmrqy4dgkxre27 \
+    #     --discovery-token-ca-cert-hash sha256:5e5835f025255744736a67f2e940c1b94b4e33ce87f9edc01e6b0c2b4d255fa6
+
+
+
+        alias "kgp=kubectl get po "
+        alias "kcgc=kubectl config get-contexts"
+        alias "kgs=kubectl get svc"
+
+        sudo vi .bashrc 
+
+        source .bashrc 
+
+        kgp
+        kgp -n transactions

@@ -1,0 +1,57 @@
+#update apt repository
+
+sudo apt update && sudo apt-get upgrade 
+
+
+#install docker 
+
+sudo curl -sSL https://get.docker.com/ | sh 
+
+sudo usermod -aG docker $USER 
+docker -- version 
+
+sudo systemctl enable docker
+sudo systemctl start docker
+sudo systemctl status docker
+
+
+
+#install kubernetes 
+
+curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add
+
+sudo apt-add-repository "deb http://apt.kubernetes.io/kubernetes-xenial main"
+
+
+#install kubernetes tools 
+
+sudo apt-get install kubeadm kubelet kubectl
+sudo apt-mark hold kubeadm kubelet kubectl
+
+kubeadm version
+
+#turn off swap memory 
+
+sudo swapoff –a 
+
+# naming hosts 
+sudo hostnamectl set-hostname master-node
+sudo hostnamectl set-hostname w1
+
+#initialized kubernetes on master node 
+sudo kubeadm init --pod-network-cidr=10.244.0.0/16
+
+
+mkdir -p $HOME/.kube
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+
+sudo kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+
+kubectl get pods --all-namespaces
+
+#enter this command on the worker node 
+kubeadm join --discovery-token abcdef.1234567890abcdef --discovery token-ca-cert-hash sha256:1234..cdef 1.2.3.4:6443
+
+kubectl get nodes

@@ -1,0 +1,55 @@
+INSTALL KUBERNETES
+
+
+sudo apt-get update
+
+//INSTALL DOCKER
+sudo apt-get install -y docker.io
+sudo usermod -aG docker $USER 
+
+sudo systemctl enable docker
+sudo systemctl start docker
+sudo systemctl status docker
+sudo systemctl stop docker
+sudo systemctl restart docker
+=====================cgroups =========================
+
+
+sudo swapoff -a 
+
+
+sudo vim /etc/docker/daemon.json
+{
+"exec-opts": ["native.cgroupdriver=systemd"]
+}
+
+
+sudo systemctl daemon-reload
+sudo systemctl restart docker
+
+<!-- install kubernetes -->
+
+sudo apt-get install -y apt-transport-https ca-certificates curl
+
+sudo mkdir -m 755 /etc/apt/keyrings
+
+curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.28/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+
+echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.28/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
+
+sudo apt-get update
+sudo apt-get install -y kubelet kubeadm kubectl
+sudo apt-mark hold kubelet kubeadm kubectl
+
+kubeadm join 192.168.10.192:6443 --token t45jir.j9vore768miirux6 \
+--discovery-token-ca-cert-hash sha256:c57bcce745a2545a14f40478c6001b7665847b9b0fd42734c862a01227113dc5 
+
+
+===============master only================================
+
+sudo kubeadm init --pod-network-cidr=10.244.0.0/16
+
+mkdir -p $HOME/.kube
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo chown $(id -u):$(id -g) $HOME/.kube/config
+kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml

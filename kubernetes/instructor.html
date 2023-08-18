@@ -1,0 +1,132 @@
+
+Etech kubernetes module phase1:
+kubernetes cluster Administration:
+How To Setup K8s Cluster on Ubuntu 20.04 Using Kubeadm:
+Pre-requisites :
+1 – 3 ubuntu VM’s(1 master and 2 worker). You can have more worker nodes as well.
+2 – The master node should have a minimum of 2 vCPU and 2 GB RAM, so we are going to use t2.medium instance type for both the VM’s.
+step 1 Configuring Security Groups:
+
+Create Security Group for Master and open the below ports.
+Ports for the Control-plane (Master) Node(s)
+1. TCP 6443      → For Kubernetes API server
+2. TCP 2379–2380 → For etcd server client API
+3. TCP 10250     → For Kubelet API
+4. TCP 10259     → For kube-scheduler
+5. TCP 10257     → For kube-controller-manager
+6. TCP 22        → For remote access with ssh
+7. UDP 8472      → Cluster-Wide Network Comm. — Flannel VXLAN
+
+Create Security Group for worker nodes and open the following ports.
+Ports for the Worker Node(s)
+1. TCP 10250       → For Kubelet API
+2. TCP 30000–32767 → NodePort Services†
+3. TCP 22          → For remote access with ssh
+4. UDP 8472        → Cluster-Wide Network Comm. — Flannel VXLAN
+
+Create an instance for the master node and attach it to the appropriate SG.
+Create another instance for the worker node and attach it to the appropriate SG
+Note: use t2.medium instances
+
+step 2 installations of container runtime: On all nodes 
+Important Note :- we have to install container runtime and Kubernetes on all the nodes 
+present (Masters and Workers), so the commands below should be executed on all the nodes present.
+
+Updating the apt package and installing container runtime which is Docker in our case.
+$ sudo apt-get update
+$ sudo apt-get install docker.io -y
+
+start and enable the Docker service and check it's status.
+$ sudo systemctl start docker
+$ sudo systemctl enable docker
+$ sudo systemctl status docker
+
+Add your user to the docker group to execute docker commands without any restrictions
+$ sudo usermod -aG docker $USER
+
+Add the docker daemon configurations to use systemd as the cgroup driver in the daemon.json file.
+sudo vim /etc/docker/daemon.json
+{
+   "exec-opts": ["native.cgroupdriver=systemd"]
+}
+
+Reload the docker-daemon and restart docker service.
+sudo systemctl daemon-reload
+sudo systemctl restart docker
+
+step 3 Kubernetes Installation: on all nodes
+Install the Kubernetes packages along with kubeadm, kubelet and kubectl.
+curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add
+
+sudo apt-add-repository "deb http://apt.kubernetes.io/ kubernetes-xenial main"
+======================================================================
+echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" >> ~/kubernetes.list
+sudo mv ~/kubernetes.list /etc/apt/sources.list.d
+==============================================================
+sudo apt-get install kubeadm kubelet kubectl -y
+sudo apt-mark hold kubeadm kubelet kubectl
+
+kubeadm version
+
+Disable the swap memory in all the nodes for kubeadm to work properly.
+sudo swapoff -a
+step 4 rename your nodes:
+Set hostnames
+sudo hostnamectl set-hostname master-node
+sudo hostnamectl set-hostname worker-node1
+sudo hostnamectl set-hostname worker-node2
+step 5 Initialization of cluster: ON MASTER ONLY 
+Important Note :- We have to Initialize kubeadm to start the Kubernetes cluster and the 
+Initialization is done on the master node only.
+Initializing kubeadm using the pod network 10.244.0.0/16.
+
+sudo kubeadm init --pod-network-cidr=10.244.0.0/16
+
+Run these 3 commands in the master node as follows.
+mkdir -p $HOME/.kube
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+Connect the worker nodes with the master nodes by executing the join command.
+Important Note :- This joining token will be different for every cluster, so 
+please copy the joining token which you will get after initializing kubeadm in the 
+master node and execute it in the worker nodes.
+NB:
+sudo kubeadm join 172.31.23.41:6443 --token lybz86.2dgd612hd7jzhtuu \
+                 --discovery-token-ca-cert-hash sha256:2ab402340813e8977483ebe6db0d10b3b9133a155e2443030f566ba82484accd
+
+If by any chance you have lost your joining token, then you can use the below command 
+to generate another one
+kubeadm token create --print-join-command
+testing:
+Now the cluster should be ready and you can check it by using the below command in the master node.
+kubectl get nodes
+
+You should have noticed that the nodes which we can see by using the above command are 
+in “not ready ” status.
+we have not setup our Container Network Interface (CNI) yet, once we set that up then 
+the status will change to “ready” automatically
+step 6 Network solutions add-ons: ON MASTER ONLY
+Important Note :- CNI should be implemented only on the Master node, so the command 
+below will only be executed on the master node.
+
+$ kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml
+
+$ kubectl get nodes , Make sure all nodes are ready 
+
+==========================================
+kubeadm token create --print-join-command
+===========================================
+
+
+sudo vim pod.yaml 
+kubectl apply -f pod.yml 
+
+kubectl edit po name -n link 
+kubectl describe po name -n link 
+
+========================================
+kubeadm join 192.168.10.7:6443 --token 1am1h5.5mq6jfdhdeo9yjeu \
+        --discovery-token-ca-cert-hash sha256:746be053243e831a6c241497e4bf334742572a32b5485cdb5eb44973ad65ec01
+
+
