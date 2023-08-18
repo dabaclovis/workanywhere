@@ -1,0 +1,35 @@
+docker info 
+docker login 
+docker version
+
+docker pull 
+docker run --name -p 
+docker run -d 
+docker start 
+docker ps 
+docker ps -a // all stop and running container 
+docker kill  
+docker image inspect 
+
+set memory limit 
+docker run --memory="256m" nginx 
+docker rn --cpus=".5" nginx 
+
+
+how to run a container 
+docker run --publish 80:80 --name webserver nginx
+
+docker rm containername
+
+docker run -it nginx --/bin/bash 
+
+docker exec -it containername --bash 
+docker rm $(docker ps -aq)
+
+docker images 
+
+
+remove docker images 
+docker rmi imagename 
+
+docker system prune -a

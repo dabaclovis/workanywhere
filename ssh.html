@@ -1,0 +1,76 @@
+let start by assuming you have two servers 
+- ServerA
+- ServerB 
+
+configuration for ServerA 
+==========================
+#enable ssh 
+sudo vim /etc/ssh/sshd_config 
+
+look for this line 
+
+PasswordAuthentication no 
+
+change no to yes 
+
+save and exit 
+
+run 
+service ssh restart 
+
+we are done with serverA 
+
+now ServerB 
+====================
+
+run whoami, for my case i am using ubuntu 
+make a password for ubuntu with 
+
+$ sudo passwd username
+
+enter your password 
+
+repeat the same password 
+
+next, 
+#enable ssh 
+sudo vim /etc/ssh/sshd_config
+
+look for this line
+
+PasswordAuthentication no
+
+change no to yes
+
+save and exit
+
+run
+service ssh restart
+
+=====================
+GO BACK to ServerA 
+
+#generate ssh-key 
+
+$ssh-keygen 
+keep hitting enter till the end  
+
+Copy the ssh to ServerB 
+
+$ssh-copy-id username@private_ip of serverB  
+you will type yes for the first prompt and you will be asked to enter the password created in ServerB 
+
+then you are done  
+
+mkdir a directory in ServerA  for example 
+mkdir school 
+cd school 
+touch index.html  
+cd ~
+
+now let's move the whole folder to ServerB 
+$scp -r ~/school username@private_ip of ServerB:/home/user/
+
+this is my 
+
+scp -r /home/ubuntu/school/ ubuntu@192.168.10.253:/home/ubuntu/

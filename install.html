@@ -1,0 +1,89 @@
+MASTER_NODE security group 
+==================================
+ports in security group 
+tcp 6443 => kubernetes API server 
+tcp 2379-2380 => for etcd server client API 
+tcp 10250 => for kubelet Api 
+tcp 10259 => for kube-scheduler 
+tcp 10257 => for kube-control manager 
+tcp 22 => for remote ssh
+udp 8472 => cluster wide network comm.- flannel vxlan 
+
+============================
+worker-nodes security group 
+tcp 10250 => for kubelet API 
+tcp 30000-32767 => Nodeport service 
+tcp 22 => for remote access 
+udp 8472 => for cluster-wide network comm. -flannel xvlan 
+
+
+install docker runtime on all instances 
+============================================
+sudo apt-get update 
+sudo curl -sSL https://get.docker.com/ | sh
+sudo systemctl enable docker
+sudo systemctl start docker
+sudo systemctl status docker
+
+
+
+sudo vim /etc/docker/daemon.json 
+{
+    "exec-opts": ["native.cgroupdriver=systemd"]
+}
+sudo systemctl daemon-reload 
+sudo systemctl restart docker 
+
+#install kubernetes on all instances
+==================================================
+curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add  
+<!-- echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list -->
+sudo apt-add-repository "deb http://apt.kubernetes.io/ kubernetes-xenial main"
+sudo apt-get install kubeadm kubelet kubectl -y 
+sudo apt-mark hold kubeadm kubelet kubectl 
+
+kubeadm version 
+
+sudo swapoff -a 
+
+====================================================
+#change instances 
+
+sudo hostnamectl set-hostname givename 
+
+
+========================================
+MASTER ONLY 
+sudo kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+===============================================
+sudo kubeadm init --ignore-preflight-errors=all
+===============================================
+mkdir $HOME/.kube 
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config 
+sudo chown $(id -u):$(id -g) $HOME/.kube/config 
+
+kubeadm join 192.168.10.9:6443 --token abtso8.7kx1p1pvekzfq3cx \
+--discovery-token-ca-cert-hash sha256:00f74847bebf08f989b36cc1f02c30debc5e29688eadcb650704e7b2d67ca804
+
+
+=======================error==============================
+[init] Using Kubernetes version: v1.27.4
+[preflight] Running pre-flight checks
+error execution phase preflight: [preflight] Some fatal errors occurred:
+[ERROR CRI]: container runtime is not running: output: time="2023-08-14T13:07:16Z" level=fatal msg="validate service
+connection: CRI v1 runtime API is not implemented for endpoint \"unix:///var/run/containerd/containerd.sock\": rpc
+error: code = Unimplemented desc = unknown service runtime.v1.RuntimeService"
+, error: exit status 1
+[preflight] If you know what you are doing, you can make a check non-fatal with `--ignore-preflight-errors=...`
+To see the stack trace of this error execute with --v=5 or higher
+=============================================================
+solution 
+
+sudo rm /etc/containerd/config.toml
+sudo systemctl restart containerd
+sudo kubeadm init
+
+kubeadm join 192.168.10.178:6443 --token okflei.ea8avy10skp1gvtx \
+--discovery-token-ca-cert-hash sha256:fdbbaa4b0b0577e90514ab02e4b32b514c23d4a8bb40967cd62d4e26e05e7b88
+
+

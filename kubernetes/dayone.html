@@ -1,0 +1,42 @@
+kubernetes layout:
+
+ - Infrastructure plane
+ - kubernetes plane
+ - Workload plane 
+
+============================
+1) Infrastructure plane: consist of EC2 instances (nodes)
+2) kubernetes plane:
+   - control plane components:
+     - kube-apiServer
+     - kube-scheduler
+     - kube-control manager:
+       - pod controller 
+       - service controller 
+       - replication controller 
+       - replicaSet controller 
+       - deployment controller 
+       - daemonSet controller 
+       - persistent volume controller
+       - persistent volume claim 
+       - rbac controller 
+       - serviceAccount controller 
+       - configMap controller 
+       - secret controller 
+       - componentService controller 
+       - role controller 
+       - roleBinding controller 
+       - namespace controller 
+       - resourceQuota controller 
+       - job controller 
+       - nodes controller 
+       - customResource controller 
+       - storageClass controller 
+     - etcd
+   - worker nodes components:
+       - kubeLet
+       - kube-proxy 
+       - container runtime: 
+         - containerD
+         - docker
+         - cri
