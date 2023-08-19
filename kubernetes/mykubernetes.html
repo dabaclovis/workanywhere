@@ -42,6 +42,8 @@ sudo apt-get update
 sudo apt-get install -y kubelet kubeadm kubectl
 sudo apt-mark hold kubelet kubeadm kubectl
 
+kubeadm version
+
 kubeadm join 192.168.10.192:6443 --token t45jir.j9vore768miirux6 \
 --discovery-token-ca-cert-hash sha256:c57bcce745a2545a14f40478c6001b7665847b9b0fd42734c862a01227113dc5 
 
