@@ -1,0 +1,72 @@
+A DaemonSet ensures that all (or some) Nodes run a copy of a Pod. As nodes are added to the cluster,
+Pods are added to them. As nodes are removed from the cluster, those Pods are garbage collected.
+Deleting a DaemonSet will clean up the Pods it created.
+
+Some typical uses of a DaemonSet are:
+
+running a cluster storage daemon on every node
+running a logs collection daemon on every node
+running a node monitoring daemon on every node
+In a simple case, one DaemonSet, covering all nodes, would be used for each type of daemon. A more
+complex setup might use multiple DaemonSets for a single type of daemon, but with different flags
+and/or different memory and cpu requests for different hardware types.
+
+
+Writing a DaemonSet Spec
+Create a DaemonSet
+You can describe a DaemonSet in a YAML file. For example, the daemonset.yaml file below describes a
+DaemonSet that runs the fluentd-elasticsearch Docker image
+
+For DaemonSets, we start with apiVersion, kind as DaemonSets instead of ReplicaSet, metadata and spec.
+
+=============================
+apiVersion: apps/v1
+kind: Replicaset
+metadata:
+name: monitoring-daemon
+labels:
+app: nginx
+spec:
+selector:
+matchLabels:
+app: monitoring-agent
+template:
+metadata:
+labels:
+app: monitoring-agent
+spec:
+containers:
+- name: monitoring-agent
+image: monitoring-agent
+
+=========================================
+
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+name: monitoring-daemon
+labels:
+app: nginx
+spec:
+selector:
+matchLabels:
+app: monitoring-agent
+template:
+metadata:
+labels:
+app: monitoring-agent
+spec:
+containers:
+- name: monitoring-agent
+image: monitoring-agent
+
+==========================================
+
+To create a daemonset from a definition file
+$ kubectl create -f daemon-set-definition.yaml
+
+View DaemonSets
+To list daemonsets
+$ kubectl get daemonsets
+For more details of the daemonsets
+$ kubectl describe daemonsets monitoring-daemon

@@ -1,0 +1,289 @@
+===========================
+03/24/22
+===========================
+A Property of Etechconsultingllc All Rights Reserved.
+=======================================================
+
+
+ConfigMaps:
+Configure ConfigMaps in Applications
+In this section, we will take a look at configuring configmaps in applications
+ConfigMaps are used to pass configuration data in the form of key value pairs in kuberntes. When a pod is created,
+inject the
+ConfigMaps into the pod so the key value pairs that are available as environmental variables for the application hosted
+inside
+the container in the pod.
+There are 2 phases involved in configuring ConfigMaps.
+First, create the configMaps
+Second, Inject them into the pod.
+Just like any other kubernetes objects there are 2 ways of creating a configmap.
+The Imperative way without using a configmap definition file, and the declarative way by by using a configmap definition
+file.
+If you do not wish to create a configmap definition file, use the command below.
+$ kubectl create configmap app-config --from-literal=APP_COLOR=blue --from-literal=APP_MODE=prod :
+The command is followed by the config name and the option from-literal.
+the from literal option is used to specify the key value pairs in the command itself.
+In this example we are creating a configmap by the value app-onfig, with key value pair APP_COLOR equals blue.
+If you wish to add key value pairs simply specify the from literal options multile times however this will get
+complicated
+when you have too many configuration items.
+
+Another way to input configuration data is through a file. Use the from file option to specify a path to the file that
+contains
+the required data.
+$ kubectl create configmap app-config --from-file=app_config.properties (Another way):
+The data from this file is read and stored under the name of the file.
+
+The declarative way:
+For this, we create a definition file just like how we did for the pod. The file has an API version, kind, metadata, and
+instead of spec, here we have data
+apiVersion: v1
+kind: ConfigMap
+metadata:
+name: app-config
+namespace: prod
+data:
+APP_COLOR: blue
+APP_MODE: prod
+
+Create a config map definition file and run the 'kubectl create` command to deploy it.
+$ kubectl create -f config-map.yaml
+
+To view configMaps
+
+$ kubectl get configmaps (or)
+$ kubectl get cm
+To describe configmaps
+
+$ kubectl describe configmaps
+note:
+It is important to name your configmaps appropriately as you will be using these names later while associating it with
+pods.
+
+Configuring config with pods:
+If you have a simple pod definition file that runs a simple web application, to inject an environment variable add a new
+property to the container called envFrom.
+The envFrom is a list so we can pass as many environmental variables as required. Each item in the list corresponds to
+a configmap item. specify the name of the configMaps created earlier. This is how to inject a specific configMaps from
+the
+ones created before.
+
+Inject configmap in pod
+
+apiVersion: v1
+kind: Pod
+metadata:
+name: simple-webapp-color
+namespace: prod
+spec:
+containers:
+- name: simple-webapp-color
+image: nginx
+ports:
+- containerPort: 80
+envFrom:
+- configMapRef:
+name: app-config
+$ kubectl create -f pod-definition.yaml
+
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+name: app-config
+data:
+APP_COLOR: blue
+APP_MODE: prod
+
+-You can inject it as a Single Environment Variable
+-You can inject it as a file in a Volume
+
+Secrets:
+In this section, we will take a look at secrets in kubernetes
+Secrets are used to store sensitive information like password or keys.
+They are similar to configMaps except that they are stored in an encoded or hashed format. As with config maps there are
+2 steps
+involved in working with secrets.
+First, Create a secret
+Second, Inject the secret into a pod.
+The Declarative way
+For this we create a definition file just like how we did for the configmap
+How ever one thing we discussed with secret is that they are used to store sensitive data and are stored in an encoded
+format
+While creating a secret with the declarative approach you must specify the secret values in a hashed format.
+How do you convert the data from plain text to an encoded format: ?
+On a linux host from the command,
+Generate a hash value of the password and pass it to secret-data.yaml definition value as a value to DB_Password
+variable.
+$ echo -n "mysql" | base64
+$ echo -n "root" | base64
+$ echo -n "paswrd"| base64
+Create a secret definition file and run kubectl create to deploy it
+
+apiVersion: v1
+kind: Secret
+metadata:
+name: app-secret
+namespace: prod
+data:
+DB_Host: bX1zcWw=
+DB_User: cm9vdA==
+DB_Password: cGFzd3Jk
+$ kubectl create -f secret-data.yaml
+
+To view secrets
+
+$ kubectl get secrets
+To describe secret
+
+$ kubectl describe secret
+To view the values of the secret
+
+$ kubectl get secret app-secret -o yaml
+To decode secrets:
+$ echo -n "bX1zcWw=" | base64 --decode
+$ echo -n "cm9vdA==" | base64 --decode
+$ echo -n "cGFzd3Jk" | base64 --decode
+
+
+Injecting secrets to a pod:
+To inject an environmental variable add a new property to the container called envFrom.
+The envFrom from property is a list so we can pass as many environmental variables as required. Each item in the list
+corresponds
+to a secret item.
+Specify the name of the secret you created earlier .
+Creating the pod definition file now make the data in the secret available as environmental variables for the
+application.
+
+
+apiVersion: v1
+kind: Pod
+metadata:
+name: simple-webapp-color
+namespace: prod
+spec:
+containers:
+- name: simple-webapp-color
+image: simple-webapp-color
+ports:
+- containerPort: 8080
+envFrom:
+- secretRef:
+name: app-secret
+$ kubectl create -f pod-definition.yaml
+
+note: CreateContainerConfigError
+This error indicates that the pod can not reach the secret usually, This is because the pod and secret are on different
+namespaces
+
+There are other ways to inject secrets into pods.
+You can inject as Single ENV variable
+
+You can inject as whole secret as files in a Volume
+
+
+
+StatefulSet:
+Overview:
+
+StatefulSets represent a set of Pods with unique, persistent identities and stable hostnames that
+GKE maintains regardless of where they are scheduled. The state information and other resilient
+data for any given StatefulSet Pod is maintained in persistent disk storage associated with the
+StatefulSet.
+
+StatefulSets use an ordinal index for the identity and ordering of their Pods. By default,
+StatefulSet Pods are deployed in sequential order and are terminated in reverse ordinal order. For
+example, a StatefulSet named web has its Pods named web-0, web-1, and web-2. When the web Pod
+specification is changed, its Pods are gracefully stopped and recreated in an ordered way; in this
+example, web-2 is terminated first, then web-1, and so on. Alternatively, you can specify the
+podManagementPolicy: Parallel field to have a StatefulSet launch or terminate all of its Pods in
+parallel, rather than waiting for Pods to become Running and Ready or to be terminated prior to
+launching or terminating another Pod.
+
+StatefulSets use a Pod template, which contains a specification for its Pods. The Pod specification
+determines how each Pod should look: what applications should run inside its containers, which
+volumes it should mount, its labels and selectors, and more.
+
+Usage patterns: StatefulSets are designed to deploy stateful applications and clustered applications
+that save data to persistent storage, such as Compute Engine persistent disks. StatefulSets are
+suitable for deploying Kafka, MySQL, Redis, ZooKeeper, and other applications needing unique,
+persistent identities and stable hostnames. For stateless applications, use Deployments.
+
+Creating StatefulSets: Once created, the StatefulSet ensures that the desired number of Pods are
+running and available at all times. The StatefulSet automatically replaces Pods that fail or are
+evicted from their nodes, and automatically associates new Pods with the storage resources,
+resource requests and limits, and other configurations defined in the StatefulSet's Pod
+specification.
+
+The following is an example of a Service and StatefulSet manifest file:
+apiVersion: v1
+kind: Service
+metadata:
+name: nginx
+labels:
+app: nginx
+spec:
+ports:
+- port: 80
+name: web
+clusterIP: None
+selector:
+app: nginx
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+name: web
+spec:
+selector:
+matchLabels:
+app: nginx # Label selector that determines which Pods belong to the StatefulSet
+# Must match spec: template: metadata: labels
+serviceName: "nginx"
+replicas: 3
+template:
+metadata:
+labels:
+app: nginx # Pod template's label selector
+spec:
+terminationGracePeriodSeconds: 10
+containers:
+- name: nginx
+image: k8s.gcr.io/nginx-slim:0.8
+ports:
+- containerPort: 80
+name: web
+volumeMounts:
+- name: www
+mountPath: /usr/share/nginx/html
+volumeClaimTemplates:
+- metadata:
+name: www
+spec:
+accessModes: [ "ReadWriteOnce" ]
+resources:
+requests:
+storage: 1Gi
+
+
+In this example:
+
+A Service object named nginx is created, indicated by the metadata: name field. The Service targets an app
+called nginx, indicated by labels: app: nginx and selector: app: nginx. The Service exposes port 80 and
+names it web. This Service controls the network domain and to route Internet traffic to the containerized
+application deployed by the StatefulSet.
+A StatefulSet named web is created with three replicated Pods (replicas: 3).
+The Pod template (spec: template) indicates that its Pods are labelled app: nginx.
+The Pod specification (template: spec) indicates that the StatefulSet's Pods run one container, nginx, which
+runs the nginx-slim image at version 0.8. The container image is hosted by Container Registry.
+The Pod specification uses the web port opened by the Service.
+template: spec: volumeMounts specifies a mountPath, which is named www. The mountPath is the path
+within the container at which a storage volume should be mounted.
+The StatefulSet provisions a PersistentVolumeClaim, www, with 1GB of provisioned storage.
+
+In sum, the Pod specification contains the following instructions:
+Label each Pod as app: nginx.
+In each Pod, run one container named nginx.
+Run the nginx-slim image at version 0.8.
+Have Pods use port 80.
+Save data to the mount path.
