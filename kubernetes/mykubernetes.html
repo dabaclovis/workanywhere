@@ -66,3 +66,5 @@ kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.7.0/a
 <!-- generate a user token  -->
 kubectl -n kubernetes-dashboard create token admin-user
 kubectl proxy
+<!-- error in kubernetes installation  -->
+W0915 03:43:25.485381   12688 checks.go:835] detected that the sandbox image "registry.k8s.io/pause:3.8" of the container runtime is inconsistent with that used by kubeadm. It is recommended that using "registry.k8s.io/pause:3.9" as the CRI sandbox image.
